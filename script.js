@@ -1,176 +1,172 @@
-:root {
-    --primary-color: #6c5ce7;
-    --bg-color: #ffffff;
-    --text-color: #333333;
-    --task-bg: #f9f9f9;
-    --border-color: #dddddd;
-}
+document.addEventListener('DOMContentLoaded', () => {
+    // DOM Elements
+    const taskInput = document.getElementById('taskInput');
+    const dueDate = document.getElementById('dueDate');
+    const prioritySelect = document.getElementById('prioritySelect');
+    const addBtn = document.getElementById('addBtn');
+    const taskList = document.getElementById('taskList');
+    const themeToggle = document.getElementById('themeToggle');
+    const filterSelect = document.getElementById('filterSelect');
 
-.dark-mode {
-    --primary-color: #a29bfe;
-    --bg-color: #222222;
-    --text-color: #f1f1f1;
-    --task-bg: #333333;
-    --border-color: #444444;
-}
+    // Set default due date to today
+    dueDate.valueAsDate = new Date();
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    transition: background 0.3s, color 0.3s;
-}
+    // Theme Toggle
+    themeToggle.addEventListener('click', toggleTheme);
+    
+    // Load saved theme preference
+    if (localStorage.getItem('theme') === 'dark') {
+        document.body.classList.add('dark-mode');
+        themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+    }
 
-body {
-    background: var(--bg-color);
-    color: var(--text-color);
-    min-height: 100vh;
-    display: flex;
-    justify-content: center;
-    padding: 20px;
-}
+    // Load tasks
+    loadTasks();
 
-.container {
-    width: 100%;
-    max-width: 600px;
-}
+    // Event Listeners
+    addBtn.addEventListener('click', addTask);
+    taskInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') addTask();
+    });
+    filterSelect.addEventListener('change', filterTasks);
 
-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-}
+    function toggleTheme() {
+        document.body.classList.toggle('dark-mode');
+        const isDarkMode = document.body.classList.contains('dark-mode');
+        themeToggle.innerHTML = isDarkMode ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+        localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+    }
 
-.controls {
-    display: flex;
-    gap: 10px;
-}
+    function addTask() {
+        const taskText = taskInput.value.trim();
+        if (!taskText) return;
 
-#themeToggle {
-    background: none;
-    border: none;
-    color: var(--text-color);
-    font-size: 1.2rem;
-    cursor: pointer;
-}
+        const task = {
+            id: Date.now(),
+            text: taskText,
+            completed: false,
+            dueDate: dueDate.value,
+            priority: prioritySelect.value
+        };
 
-.input-section {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
-}
+        addTaskToDOM(task);
+        saveTask(task);
+        taskInput.value = '';
+        taskInput.focus();
+    }
 
-#taskInput {
-    flex: 1;
-    min-width: 200px;
-    padding: 10px;
-    border: 2px solid var(--border-color);
-    border-radius: 5px;
-    background: var(--bg-color);
-    color: var(--text-color);
-}
+    function addTaskToDOM(task) {
+        const li = document.createElement('li');
+        li.className = `task priority-${task.priority}`;
+        li.setAttribute('data-id', task.id);
+        li.setAttribute('data-completed', task.completed);
 
-#dueDate, #prioritySelect, #filterSelect {
-    padding: 10px;
-    border: 2px solid var(--border-color);
-    border-radius: 5px;
-    background: var(--bg-color);
-    color: var(--text-color);
-}
+        const dueDateFormatted = task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'No date';
 
-#addBtn {
-    background: var(--primary-color);
-    color: white;
-    border: none;
-    border-radius: 5px;
-    padding: 10px 15px;
-    cursor: pointer;
-}
+        li.innerHTML = `
+            <div class="task-header">
+                <span class="task-title">${task.text}</span>
+                <div class="task-actions">
+                    <button class="complete-btn"><i class="fas fa-check"></i></button>
+                    <button class="delete-btn"><i class="fas fa-trash"></i></button>
+                </div>
+            </div>
+            <div class="task-info">
+                <span>Due: ${dueDateFormatted}</span>
+                <span>Priority: ${task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}</span>
+            </div>
+        `;
 
-#taskList {
-    list-style: none;
-}
+        if (task.completed) {
+            li.classList.add('completed');
+        }
 
-.task {
-    background: var(--task-bg);
-    padding: 15px;
-    margin-bottom: 10px;
-    border-radius: 8px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    position: relative;
-}
+        li.querySelector('.complete-btn').addEventListener('click', toggleComplete);
+        li.querySelector('.delete-btn').addEventListener('click', deleteTask);
 
-.task-header {
-    display: flex;
-    justify-content: space-between;
-}
+        taskList.appendChild(li);
+    }
 
-.task-title {
-    flex: 1;
-}
+    function toggleComplete(e) {
+        const li = e.target.closest('li');
+        li.classList.toggle('completed');
+        const isCompleted = li.classList.contains('completed');
+        li.setAttribute('data-completed', isCompleted);
+        
+        // Trigger confetti if task was just completed
+        if (isCompleted) {
+            triggerConfetti();
+        }
 
-.task.priority-low {
-    border-left: 4px solid #00b894;
-}
+        updateTaskStatus(li.getAttribute('data-id'), isCompleted);
+        filterTasks(); // Reapply filters after status change
+    }
 
-.task.priority-medium {
-    border-left: 4px solid #fdcb6e;
-}
+    function deleteTask(e) {
+        const li = e.target.closest('li');
+        li.classList.add('fade-out');
+        setTimeout(() => {
+            li.remove();
+            removeTaskFromStorage(li.getAttribute('data-id'));
+        }, 300);
+    }
 
-.task.priority-high {
-    border-left: 4px solid #ff7675;
-}
+    function filterTasks() {
+        const filterValue = filterSelect.value;
+        const tasks = document.querySelectorAll('#taskList li');
 
-.task-info {
-    display: flex;
-    gap: 15px;
-    font-size: 0.9rem;
-    color: #777;
-}
+        tasks.forEach(task => {
+            const isCompleted = task.getAttribute('data-completed') === 'true';
+            
+            switch(filterValue) {
+                case 'all':
+                    task.style.display = 'flex';
+                    break;
+                case 'active':
+                    task.style.display = isCompleted ? 'none' : 'flex';
+                    break;
+                case 'completed':
+                    task.style.display = isCompleted ? 'flex' : 'none';
+                    break;
+            }
+        });
+    }
 
-.dark-mode .task-info {
-    color: #aaa;
-}
+    function triggerConfetti() {
+        confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 }
+        });
+    }
 
-.task-actions {
-    display: flex;
-    gap: 10px;
-}
+    // LocalStorage Functions
+    function saveTask(task) {
+        const tasks = getTasksFromStorage();
+        tasks.push(task);
+        localStorage.setItem('tasks', JSON.stringify(tasks));
+    }
 
-.task-actions button {
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 1rem;
-}
+    function getTasksFromStorage() {
+        return localStorage.getItem('tasks') ? JSON.parse(localStorage.getItem('tasks')) : [];
+    }
 
-.complete-btn {
-    color: #00b894;
-}
+    function loadTasks() {
+        const tasks = getTasksFromStorage();
+        tasks.forEach(task => addTaskToDOM(task));
+        filterTasks();
+    }
 
-.delete-btn {
-    color: #ff7675;
-}
+    function updateTaskStatus(id, completed) {
+        const tasks = getTasksFromStorage();
+        const task = tasks.find(task => task.id == id);
+        if (task) task.completed = completed;
+        localStorage.setItem('tasks', JSON.stringify(tasks));
+    }
 
-.task.completed {
-    opacity: 0.7;
-}
-
-.task.completed .task-title {
-    text-decoration: line-through;
-}
-
-#confetti {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: 1000;
-}
+    function removeTaskFromStorage(id) {
+        let tasks = getTasksFromStorage();
+        tasks = tasks.filter(task => task.id != id);
+        localStorage.setItem('tasks', JSON.stringify(tasks));
+    }
+});
