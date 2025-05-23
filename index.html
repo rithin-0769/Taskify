@@ -3,40 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title> Taskify - Smart To-Do List</title>
+    <title>Taskify - Your Productivity Companion</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body class="light-mode">
-    <div class="container">
-        <header>
-            <h1>Taskify</h1>
-            <div class="controls">
-                <button id="themeToggle"><i class="fas fa-moon"></i></button>
-                <select id="filterSelect">
-                    <option value="all">All Tasks</option>
-                    <option value="active">Active</option>
-                    <option value="completed">Completed</option>
-                </select>
+    <div class="blur-bg"></div>
+    <main class="app-container">
+        <header class="app-header">
+            <div>
+                <h1><i class="fas fa-check-circle"></i> Taskify</h1>
+                <p>Organize your work and life</p>
+            </div>
+            <div class="header-controls">
+                <button id="themeToggle" class="icon-btn" aria-label="Toggle theme">
+                    <i class="fas fa-moon"></i>
+                </button>
             </div>
         </header>
 
-        <div class="input-section">
-            <input type="text" id="taskInput" placeholder="Add a new task...">
-            <input type="date" id="dueDate">
-            <select id="prioritySelect">
-                <option value="low">Low</option>
-                <option value="medium" selected>Medium</option>
-                <option value="high">High</option>
-            </select>
-            <button id="addBtn"><i class="fas fa-plus"></i> Add</button>
+        <div class="input-card">
+            <div class="input-group">
+                <input type="text" id="taskInput" placeholder="What needs to be done?">
+                <button id="addBtn" class="primary-btn">
+                    <i class="fas fa-plus"></i> Add Task
+                </button>
+            </div>
+            <div class="task-options">
+                <div class="option-group">
+                    <label for="dueDate"><i class="far fa-calendar-alt"></i></label>
+                    <input type="date" id="dueDate">
+                </div>
+                <div class="option-group">
+                    <label for="prioritySelect"><i class="fas fa-flag"></i></label>
+                    <select id="prioritySelect">
+                        <option value="low">Low</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="high">High</option>
+                    </select>
+                </div>
+                <div class="option-group">
+                    <label for="filterSelect"><i class="fas fa-filter"></i></label>
+                    <select id="filterSelect">
+                        <option value="all">All Tasks</option>
+                        <option value="active">Active</option>
+                        <option value="completed">Completed</option>
+                    </select>
+                </div>
+            </div>
         </div>
 
-        <ul id="taskList"></ul>
-    </div>
+        <div class="tasks-container">
+            <div class="stats-bar">
+                <span id="taskCount">0 tasks</span>
+                <span id="completedCount">0 completed</span>
+            </div>
+            <ul id="taskList"></ul>
+        </div>
+    </main>
 
     <canvas id="confetti"></canvas>
-    
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script src="script.js"></script>
 </body>
