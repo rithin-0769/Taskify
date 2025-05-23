@@ -30,6 +30,17 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     filterSelect.addEventListener('change', filterTasks);
 
+    // Helper function to ensure task data shape
+    function validateTask(task) {
+        return {
+            id: task.id || Date.now(),
+            text: task.text || 'Untitled Task',
+            completed: task.completed || false,
+            dueDate: task.dueDate || new Date().toISOString().split('T')[0],
+            priority: task.priority || 'medium'  // Default to medium if missing
+        };
+    }
+
     function toggleTheme() {
         document.body.classList.toggle('dark-mode');
         const isDarkMode = document.body.classList.contains('dark-mode');
@@ -41,13 +52,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const taskText = taskInput.value.trim();
         if (!taskText) return;
 
-        const task = {
+        const task = validateTask({
             id: Date.now(),
             text: taskText,
             completed: false,
             dueDate: dueDate.value,
             priority: prioritySelect.value
-        };
+        });
 
         addTaskToDOM(task);
         saveTask(task);
@@ -62,6 +73,11 @@ document.addEventListener('DOMContentLoaded', () => {
         li.setAttribute('data-completed', task.completed);
 
         const dueDateFormatted = task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'No date';
+        
+        // Safe priority display handling
+        const priorityDisplay = task.priority 
+            ? task.priority.charAt(0).toUpperCase() + task.priority.slice(1)
+            : 'Medium';
 
         li.innerHTML = `
             <div class="task-header">
@@ -73,7 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             <div class="task-info">
                 <span>Due: ${dueDateFormatted}</span>
-                <span>Priority: ${task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}</span>
+                <span>Priority: ${priorityDisplay}</span>
             </div>
         `;
 
@@ -93,13 +109,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const isCompleted = li.classList.contains('completed');
         li.setAttribute('data-completed', isCompleted);
         
-        // Trigger confetti if task was just completed
         if (isCompleted) {
             triggerConfetti();
         }
 
         updateTaskStatus(li.getAttribute('data-id'), isCompleted);
-        filterTasks(); // Reapply filters after status change
+        filterTasks();
     }
 
     function deleteTask(e) {
@@ -148,20 +163,32 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function getTasksFromStorage() {
-        return localStorage.getItem('tasks') ? JSON.parse(localStorage.getItem('tasks')) : [];
+        const tasks = localStorage.getItem('tasks');
+        if (!tasks) return [];
+        
+        // Validate all stored tasks
+        return JSON.parse(tasks).map(validateTask);
     }
 
     function loadTasks() {
+        // First migrate any old tasks
         const tasks = getTasksFromStorage();
+        
+        // Save back in case we fixed any data
+        localStorage.setItem('tasks', JSON.stringify(tasks));
+        
+        // Now render
         tasks.forEach(task => addTaskToDOM(task));
         filterTasks();
     }
 
     function updateTaskStatus(id, completed) {
         const tasks = getTasksFromStorage();
-        const task = tasks.find(task => task.id == id);
-        if (task) task.completed = completed;
-        localStorage.setItem('tasks', JSON.stringify(tasks));
+        const taskIndex = tasks.findIndex(task => task.id == id);
+        if (taskIndex !== -1) {
+            tasks[taskIndex].completed = completed;
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+        }
     }
 
     function removeTaskFromStorage(id) {
