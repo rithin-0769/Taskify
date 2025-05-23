@@ -1,96 +1,176 @@
-document.addEventListener('DOMContentLoaded', () => {
-    const taskInput = document.getElementById('taskInput');
-    const addBtn = document.getElementById('addBtn');
-    const taskList = document.getElementById('taskList');
+:root {
+    --primary-color: #6c5ce7;
+    --bg-color: #ffffff;
+    --text-color: #333333;
+    --task-bg: #f9f9f9;
+    --border-color: #dddddd;
+}
 
-    // Load tasks from localStorage
-    loadTasks();
+.dark-mode {
+    --primary-color: #a29bfe;
+    --bg-color: #222222;
+    --text-color: #f1f1f1;
+    --task-bg: #333333;
+    --border-color: #444444;
+}
 
-    // Add task
-    addBtn.addEventListener('click', addTask);
-    taskInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') addTask();
-    });
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    transition: background 0.3s, color 0.3s;
+}
 
-    function addTask() {
-        const taskText = taskInput.value.trim();
-        if (taskText === '') return;
+body {
+    background: var(--bg-color);
+    color: var(--text-color);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+}
 
-        const task = {
-            id: Date.now(),
-            text: taskText,
-            completed: false
-        };
+.container {
+    width: 100%;
+    max-width: 600px;
+}
 
-        addTaskToDOM(task);
-        saveTask(task);
-        taskInput.value = '';
-    }
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
 
-    function addTaskToDOM(task) {
-        const li = document.createElement('li');
-        li.className = 'task';
-        li.setAttribute('data-id', task.id);
+.controls {
+    display: flex;
+    gap: 10px;
+}
 
-        if (task.completed) {
-            li.classList.add('completed');
-        }
+#themeToggle {
+    background: none;
+    border: none;
+    color: var(--text-color);
+    font-size: 1.2rem;
+    cursor: pointer;
+}
 
-        li.innerHTML = `
-            <span>${task.text}</span>
-            <div class="task-actions">
-                <button class="complete-btn"><i class="fas fa-check"></i></button>
-                <button class="delete-btn"><i class="fas fa-trash"></i></button>
-            </div>
-        `;
+.input-section {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
 
-        li.querySelector('.complete-btn').addEventListener('click', toggleComplete);
-        li.querySelector('.delete-btn').addEventListener('click', deleteTask);
+#taskInput {
+    flex: 1;
+    min-width: 200px;
+    padding: 10px;
+    border: 2px solid var(--border-color);
+    border-radius: 5px;
+    background: var(--bg-color);
+    color: var(--text-color);
+}
 
-        taskList.appendChild(li);
-    }
+#dueDate, #prioritySelect, #filterSelect {
+    padding: 10px;
+    border: 2px solid var(--border-color);
+    border-radius: 5px;
+    background: var(--bg-color);
+    color: var(--text-color);
+}
 
-    function toggleComplete(e) {
-        const li = e.target.closest('li');
-        li.classList.toggle('completed');
-        updateTaskStatus(li.getAttribute('data-id'), li.classList.contains('completed'));
-    }
+#addBtn {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 10px 15px;
+    cursor: pointer;
+}
 
-    function deleteTask(e) {
-        const li = e.target.closest('li');
-        li.classList.add('fade-out');
-        setTimeout(() => {
-            li.remove();
-            removeTaskFromStorage(li.getAttribute('data-id'));
-        }, 300);
-    }
+#taskList {
+    list-style: none;
+}
 
-    // LocalStorage Functions
-    function saveTask(task) {
-        const tasks = getTasksFromStorage();
-        tasks.push(task);
-        localStorage.setItem('tasks', JSON.stringify(tasks));
-    }
+.task {
+    background: var(--task-bg);
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    position: relative;
+}
 
-    function getTasksFromStorage() {
-        return localStorage.getItem('tasks') ? JSON.parse(localStorage.getItem('tasks')) : [];
-    }
+.task-header {
+    display: flex;
+    justify-content: space-between;
+}
 
-    function loadTasks() {
-        const tasks = getTasksFromStorage();
-        tasks.forEach(task => addTaskToDOM(task));
-    }
+.task-title {
+    flex: 1;
+}
 
-    function updateTaskStatus(id, completed) {
-        const tasks = getTasksFromStorage();
-        const task = tasks.find(task => task.id == id);
-        if (task) task.completed = completed;
-        localStorage.setItem('tasks', JSON.stringify(tasks));
-    }
+.task.priority-low {
+    border-left: 4px solid #00b894;
+}
 
-    function removeTaskFromStorage(id) {
-        let tasks = getTasksFromStorage();
-        tasks = tasks.filter(task => task.id != id);
-        localStorage.setItem('tasks', JSON.stringify(tasks));
-    }
-});
+.task.priority-medium {
+    border-left: 4px solid #fdcb6e;
+}
+
+.task.priority-high {
+    border-left: 4px solid #ff7675;
+}
+
+.task-info {
+    display: flex;
+    gap: 15px;
+    font-size: 0.9rem;
+    color: #777;
+}
+
+.dark-mode .task-info {
+    color: #aaa;
+}
+
+.task-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.task-actions button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+}
+
+.complete-btn {
+    color: #00b894;
+}
+
+.delete-btn {
+    color: #ff7675;
+}
+
+.task.completed {
+    opacity: 0.7;
+}
+
+.task.completed .task-title {
+    text-decoration: line-through;
+}
+
+#confetti {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1000;
+}
